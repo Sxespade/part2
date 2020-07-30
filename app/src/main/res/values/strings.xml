@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="action_settings">Настройки</string>
+    <string name="add">Добавить</string>
+    <string name="clear">Очистить</string>
+    <string name="search">Поиск</string>
+    <string name="nav_header_desc" />
+    <string name="nav_header_title" />
+    <string name="nav_header_subtitle" />
+    <string name="menu_home">меню хоум</string>
+    <string name="menu_gallery">Галлерея</string>
+    <string name="menu_slideshow">Слайдшоу</string>
+    <string name="menu_tools">Инструменты</string>
+    <string name="menu_share">Поделиться</string>
+    <string name="menu_send">Отправить</string>
+    <string name="navigation_drawer_open">Ам</string>
+    <string name="navigation_drawer_close">Ням</string>
+</resources>
