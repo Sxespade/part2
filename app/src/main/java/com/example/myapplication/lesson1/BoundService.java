@@ -50,6 +50,10 @@ public class BoundService extends Service {
                     try {
                         urlConnection = (HttpsURLConnection) uri.openConnection();
                         urlConnection.setRequestMethod("GET"); // установка метода получения данных -GET
+
+
+
+
                         urlConnection.setReadTimeout(10000); // установка таймаута - 10 000 миллисекунд
                         BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream())); // читаем  данные в поток
                         String result = getLines(in);
