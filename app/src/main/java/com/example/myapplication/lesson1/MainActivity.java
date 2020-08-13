@@ -44,6 +44,12 @@ import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
 
     private ListAdapter adapter;
@@ -54,10 +60,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TextView textHumidity;
     private TextView bindTemp;
     private Button button;
+    private TextView temperText;
     private boolean isBound = false;
     private BoundService.ServiceBinder boundService;
     Intent intent;
     private final Handler handler = new Handler();
+    private OpenWeather openWeather;
+    private static final float AbsoluteZero = -273.15f;
+    private Button button3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +79,41 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         initByID();
         initSensor();
         HumiditySensor humiditySensor = new HumiditySensor();
+        initRetrofit();
+
+            requestRetrofit("Moscow","61e5cbccdc6985b69b92b24028a5dfc5");
     }
+
+    private void initRetrofit() {
+        Retrofit retrofit;
+        retrofit = new Retrofit.Builder()
+                // Базовая часть адреса
+                .baseUrl("http://api.openweathermap.org/")
+                // Конвертер, необходимый для преобразования JSON в объекты
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        // Создаём объект, при помощи которого будем выполнять запросы
+        openWeather = retrofit.create(OpenWeather.class);
+    }
+
+    private void requestRetrofit(String city, String keyApi) {
+        openWeather.loadWeather(city, keyApi)
+                .enqueue(new Callback<WeatherRequest>() {
+                    @Override
+                    public void onResponse(Call<WeatherRequest> call, Response<WeatherRequest> response) {
+                        if (response.body() != null) {
+                            float result = response.body().getMain().getTemp() + AbsoluteZero;
+                            temperText.setText(Float.toString(result));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<WeatherRequest> call, Throwable t) {
+                        temperText.setText("Error");
+                    }
+                });
+    }
+
 
     @Override
     protected void onStart() {
@@ -128,6 +172,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         textHumidity = findViewById(R.id.humi);
         bindTemp = findViewById(R.id.bindtemp);
         button = findViewById(R.id.button);
+        temperText = findViewById(R.id.temperText);
+        button3 = findViewById(R.id.button3);
     }
 
     private Toolbar initToolbar() {
