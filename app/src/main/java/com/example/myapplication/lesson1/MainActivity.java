@@ -9,20 +9,34 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorEventListener2;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.example.myapplication.R;
 import com.example.myapplication.lesson1.ListAdapter;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
 
     private ListAdapter adapter;
+    private SensorManager sensorManager;
+    private Sensor temperature;
+    private Float tempValue;
+    private TextView textTemp;
+    private TextView textHumidity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +45,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = initToolbar();
         initDrawer(toolbar);
         initList();
+        initByID();
+        initSensor();
+        HumiditySensor humiditySensor = new HumiditySensor();
+    }
+
+    private void initSensor() {
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        temperature = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+        sensorManager.registerListener(this, temperature, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    private void initByID() {
+        textTemp = findViewById(R.id.temp);
+        textHumidity = findViewById(R.id.humi);
     }
 
     private Toolbar initToolbar() {
@@ -73,12 +101,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return true;
         }
 
-        if (id == R.id.action_add){
+        if (id == R.id.action_add) {
             adapter.addItem("New element");
             return true;
         }
 
-        if (id == R.id.action_clear){
+        if (id == R.id.action_clear) {
             adapter.clearItems();
             return true;
         }
@@ -109,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 Snackbar.make(searchText, query, Snackbar.LENGTH_LONG).show();
                 return true;
             }
+
             // реагирует на нажатие каждой клавиши
             @Override
             public boolean onQueryTextChange(String newText) {
@@ -142,5 +171,40 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        tempValue = sensorEvent.values[0];
+        textTemp.setText(String.valueOf(tempValue));
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+    class HumiditySensor implements SensorEventListener {
+
+        private SensorManager sensorManager;
+        private Sensor humidity;
+        private Float humValue;
+
+        HumiditySensor(){
+            sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+            humidity = sensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+            sensorManager.registerListener(this, humidity, SensorManager.SENSOR_DELAY_NORMAL);
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent sensorEvent) {
+            humValue = sensorEvent.values[0];
+            textHumidity.setText(String.valueOf(humValue));
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int i) {
+
+        }
     }
 }
