@@ -1,6 +1,7 @@
 package com.example.myapplication.lesson1;
 
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -10,24 +11,38 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorEventListener2;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.myapplication.R;
 import com.example.myapplication.lesson1.ListAdapter;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
 
@@ -37,6 +52,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private Float tempValue;
     private TextView textTemp;
     private TextView textHumidity;
+    private TextView bindTemp;
+    private Button button;
+    private boolean isBound = false;
+    private BoundService.ServiceBinder boundService;
+    Intent intent;
+    private final Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +71,52 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         HumiditySensor humiditySensor = new HumiditySensor();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        intent = new Intent(this, BoundService.class);
+        bindService(intent, boundServiceConnection, Context.BIND_AUTO_CREATE);
+        startService(intent);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    protected void onResume() {
+        super.onResume();
+        button.setOnClickListener((v) -> {
+            Log.d("TAG", "onResume: ");
+            if (boundService == null) {
+                bindTemp.setText("Unbound service");
+            } else {
+
+                float fibo = boundService.getWeatherRequest();
+                Log.d("TAG", "onResume: ");
+                bindTemp.setText(Float.toString(fibo));
+                stopService(intent);
+            }
+
+        });
+    }
+
+
+    ServiceConnection boundServiceConnection = new ServiceConnection() {
+
+        // При соединении с сервисом
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            boundService = (BoundService.ServiceBinder) service;
+            isBound = boundService != null;
+        }
+
+        // При разъдинении с сервисом
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+            boundService = null;
+        }
+    };
+
+
     private void initSensor() {
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         temperature = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
@@ -59,6 +126,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void initByID() {
         textTemp = findViewById(R.id.temp);
         textHumidity = findViewById(R.id.humi);
+        bindTemp = findViewById(R.id.bindtemp);
+        button = findViewById(R.id.button);
     }
 
     private Toolbar initToolbar() {
@@ -184,13 +253,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
+
     class HumiditySensor implements SensorEventListener {
 
         private SensorManager sensorManager;
         private Sensor humidity;
         private Float humValue;
 
-        HumiditySensor(){
+        HumiditySensor() {
             sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
             humidity = sensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
             sensorManager.registerListener(this, humidity, SensorManager.SENSOR_DELAY_NORMAL);
@@ -206,5 +276,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         public void onAccuracyChanged(Sensor sensor, int i) {
 
         }
+
     }
+
+
 }
