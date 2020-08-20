@@ -57,6 +57,7 @@ public class BoundService extends Service {
                         Gson gson = new Gson();
                         final WeatherRequest weatherRequest = gson.fromJson(result, WeatherRequest.class);
                         // Возвращаемся к основному потоку
+                        Thread.sleep(5000);
                         f[0] = weatherRequest.getMain().getTemp();
                         Log.d("TAG", "run: " + f[0]);
                     } catch (Exception e) {
